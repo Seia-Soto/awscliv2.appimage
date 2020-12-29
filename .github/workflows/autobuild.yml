@@ -32,6 +32,7 @@ jobs:
           )
 
   build:
+    needs: [check-version]
     if: |
       needs.check-version.outputs.remote != needs.check-version.outputs.local &&
       startsWith(needs.check-version.outputs.remote, '2.')
