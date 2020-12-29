@@ -33,7 +33,7 @@ jobs:
 
   build:
     if: |
-      needs.check-version.outputs.remote != needs.check-version.outputs.local && \
+      needs.check-version.outputs.remote != needs.check-version.outputs.local &&
       startsWith(needs.check-version.outputs.remote, '2.')
     - uses: actions/checkout@v2
     - name: Install dependencies
