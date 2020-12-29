@@ -34,50 +34,51 @@ jobs:
   build:
     needs: [check-version]
     if: |
-      needs.check-version.outputs.remote != needs.check-version.outputs.local &&
+      (needs.check-version.outputs.remote != needs.check-version.outputs.local) &&
       startsWith(needs.check-version.outputs.remote, '2.')
-    - uses: actions/checkout@v2
-    - name: Install dependencies
-      run: bash ./scripts/autobuild/install-deps.sh
-    - name: Copy build script
-      run: cat ./build > ./build.sh
-    - name: Modify build file
-      run: |
-        REM_VER=${{ needs.check-version.outputs.remote }}
+    steps:
+      - uses: actions/checkout@v2
+      - name: Install dependencies
+        run: bash ./scripts/autobuild/install-deps.sh
+      - name: Copy build script
+        run: cat ./build > ./build.sh
+      - name: Modify build file
+        run: |
+          REM_VER=${{ needs.check-version.outputs.remote }}
 
-        echo Updating version string
-        sed -i "s/VERSION\=.*/VERSION\='$REM_VER'/im" ./build.sh
-        echo Removing checksum validation
-        sed -i '/${B2SUM}/d' ./build.sh
-        echo Converting potential Windows styles
-        sed -i -e 's/\r$//' ./build.sh
-    - name: Make executable
-      run: |
-        echo Loading FUSE library
-        modprobe fuse
-        echo Making script executable
-        chmod +x ./build.sh
-    - name: Build
-      run: ./build.sh
-    - name: Publish new release
-      id: new_release
-      uses: actions/create-release@v1
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      with:
-        tag_name: ${{ steps.latest_remote_tag.outputs.ver }}
-        release_name: Build ${{ steps.latest_remote_tag.outputs.ver }}
-        body: |
-          This build is automated via GitHub Actions.
-          If you find any errors, please open an issue and let me know.
-        draft: false
-        prerelease: false
-    - name: Upload Release Asset
-      uses: actions/upload-release-asset@v1
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      with:
-        upload_url: ${{ steps.new_release.outputs.upload_url }}
-        asset_path: ./aws-x86_64.AppImage
-        asset_name: aws-x86_64.AppImage
-        asset_content_type: application/zip
+          echo Updating version string
+          sed -i "s/VERSION\=.*/VERSION\='$REM_VER'/im" ./build.sh
+          echo Removing checksum validation
+          sed -i '/${B2SUM}/d' ./build.sh
+          echo Converting potential Windows styles
+          sed -i -e 's/\r$//' ./build.sh
+      - name: Make executable
+        run: |
+          echo Loading FUSE library
+          modprobe fuse
+          echo Making script executable
+          chmod +x ./build.sh
+      - name: Build
+        run: ./build.sh
+      - name: Publish new release
+        id: new_release
+        uses: actions/create-release@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          tag_name: ${{ steps.latest_remote_tag.outputs.ver }}
+          release_name: Build ${{ steps.latest_remote_tag.outputs.ver }}
+          body: |
+            This build is automated via GitHub Actions.
+            If you find any errors, please open an issue and let me know.
+          draft: false
+          prerelease: false
+      - name: Upload Release Asset
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ steps.new_release.outputs.upload_url }}
+          asset_path: ./aws-x86_64.AppImage
+          asset_name: aws-x86_64.AppImage
+          asset_content_type: application/zip
